@@ -10,9 +10,9 @@ def generate_distributions(means, stds, n_samples):
             for (mean, std, ns) in zip(means, stds, n_samples)]
 
 
-def visualize_distributions(data, norm=False):
+def visualize_distributions(data, dist_names, norm=False):
     fig = plotly.subplots.make_subplots(rows=1, cols=2)
-    for x in data: # for each distribution
+    for i, x in enumerate(data): # for each distribution
         # (1) compute (and normalize) histogram
         h, bins = np.histogram(x)
         if norm:
@@ -24,11 +24,11 @@ def visualize_distributions(data, norm=False):
         marker_style1 = dict(color='red', size=2,
                              line=dict(color='red', width=2))
         # append data to 1st subplot:
-        fig.append_trace(go.Scatter(y=x, name='random variable',
+        fig.append_trace(go.Scatter(y=x, name=dist_names[i],
                                     marker=marker_style1), 1, 1)
         # append histogram to 2nd subplot:
         fig.append_trace(go.Scatter(x=bins_centers, y=h,
-                                    name='random variable histogram',
+                                    name="hist " + dist_names[i],
                                     marker=marker_style1), 1, 2)
     plotly.offline.iplot(fig)
 
@@ -43,6 +43,8 @@ def parse_arguments():
                              "distribution(s)")
     parser.add_argument('-n', '--num_of_samples', type=int, nargs="+",
                         help="Number of samples of the distribution(s)")
+    parser.add_argument('--names', nargs="+",
+                        help="Distribution names")
     parser.add_argument('--normalize', action='store_true',
                         help="Set true if histograms are to be normalized")
     arguments = parser.parse_args()
@@ -55,5 +57,8 @@ if __name__ == "__main__":
     s = args.stds
     n = args.num_of_samples
     normalize = args.normalize
+    names = args.names
+    if not names:
+        names = [f"var_{i}" for i in range(len(m))]
     d = generate_distributions(m, s, n)
-    visualize_distributions(d, normalize)
+    visualize_distributions(d, names, normalize)
