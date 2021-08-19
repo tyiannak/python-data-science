@@ -52,10 +52,7 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    m = args.means
-    s = args.stds
-    n = args.num_of_samples
-    normalize = args.normalize
+    m, s, n, norm = args.means, args.stds, args.num_of_samples, args.normalize
     if not(len(m) == len(s) == len(n)):
         print("Distribution parameters must be of the same length!")
         exit(1)
@@ -64,4 +61,4 @@ if __name__ == "__main__":
         names = [f"var_{i}" for i in range(len(m))]
 
     d = generate_distributions(m, s, n)
-    visualize_distributions(d, names, normalize)
+    visualize_distributions(d, names, norm)
