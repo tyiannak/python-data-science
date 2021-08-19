@@ -6,16 +6,17 @@ import plotly.graph_objs as go
 
 
 def generate_distributions(means, stds, n_samples):
-    return [numpy.random.normal(mean, std, n)
-            for (mean, std, n) in zip(means, stds, n_samples)]
+    return [numpy.random.normal(mean, std, ns)
+            for (mean, std, ns) in zip(means, stds, n_samples)]
 
 
-def visualize_distributions(data):
+def visualize_distributions(data, norm=False):
     fig = plotly.subplots.make_subplots(rows=1, cols=2)
     for x in data: # for each distribution
-        # (1) compute and normalize histogram
+        # (1) compute (and normalize) histogram
         h, bins = np.histogram(x)
-        h = h / h.sum()
+        if norm:
+            h = h / h.sum()
         # get histogram bin centers from the endpoinds:
         bins_centers = (bins[0:-1] + bins[1:]) / 2
 
@@ -34,7 +35,6 @@ def visualize_distributions(data):
 
 def parse_arguments():
     """Parse/check input arguments."""
-
     parser = argparse.ArgumentParser(prog='PROG')
     parser.add_argument('-m', '--means', type=int, nargs="+",
                         help="Mean value(s) of the distribution(s)")
@@ -43,6 +43,8 @@ def parse_arguments():
                              "distribution(s)")
     parser.add_argument('-n', '--num_of_samples', type=int, nargs="+",
                         help="Number of samples of the distribution(s)")
+    parser.add_argument('--normalize', action='store_true',
+                        help="Set true if histograms are to be normalized")
     arguments = parser.parse_args()
     return arguments
 
@@ -52,5 +54,6 @@ if __name__ == "__main__":
     m = args.means
     s = args.stds
     n = args.num_of_samples
-    data = generate_distributions(m, s, n)
-    visualize_distributions(data)
+    normalize = args.normalize
+    d = generate_distributions(m, s, n)
+    visualize_distributions(d, normalize)
