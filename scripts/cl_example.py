@@ -58,6 +58,9 @@ if __name__ == "__main__":
     if not(len(m) == len(s) == len(n)):
         print("Distribution parameters must be of the same length!")
         exit(1)
+    if len(m) > 5:
+        print("Maximum number of distributions is 5!")
+        exit(1)
     names = args.names
     if not names or len(names) != len(m):
         names = [f"var_{i}" for i in range(len(m))]
