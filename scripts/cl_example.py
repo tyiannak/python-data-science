@@ -56,8 +56,12 @@ if __name__ == "__main__":
     s = args.stds
     n = args.num_of_samples
     normalize = args.normalize
+    if not(len(m) == len(s) == len(n)):
+        print("Distribution parameters must be of the same length!")
+        exit(1)
     names = args.names
-    if not names:
+    if not names or len(names) != len(m):
         names = [f"var_{i}" for i in range(len(m))]
+
     d = generate_distributions(m, s, n)
     visualize_distributions(d, names, normalize)
