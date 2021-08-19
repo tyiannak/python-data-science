@@ -4,6 +4,7 @@ import numpy.random
 import plotly.subplots
 import plotly.graph_objs as go
 
+colors = ["red", "green", "blue", "orange", "gray"]
 
 def generate_distributions(means, stds, n_samples):
     return [numpy.random.normal(mean, std, ns)
@@ -21,8 +22,8 @@ def visualize_distributions(data, dist_names, norm=False):
         bins_centers = (bins[0:-1] + bins[1:]) / 2
 
         # (2) Plot
-        marker_style1 = dict(color='red', size=2,
-                             line=dict(color='red', width=2))
+        marker_style1 = dict(color=colors[i], size=2,
+                             line=dict(color=colors[i], width=2))
         # append data to 1st subplot:
         fig.append_trace(go.Scatter(y=x, name=dist_names[i],
                                     marker=marker_style1), 1, 1)
@@ -36,11 +37,12 @@ def visualize_distributions(data, dist_names, norm=False):
 def parse_arguments():
     """Parse/check input arguments."""
     parser = argparse.ArgumentParser(prog='PROG')
-    parser.add_argument('-m', '--means', type=int, nargs="+",
+    parser.add_argument('-m', '--means', type=int, nargs="+", required=True,
                         help="Mean value(s) of the distribution(s)")
-    parser.add_argument('-s', '--stds', type=int, nargs="+",
+    parser.add_argument('-s', '--stds', type=int, nargs="+", required=True,
                         help="Standard deviation(s) of the distribution(s)")
     parser.add_argument('-n', '--num_of_samples', type=int, nargs="+",
+                        required=True,
                         help="Number of samples of the distribution(s)")
     parser.add_argument('--names', nargs="+",
                         help="Distribution names")
