@@ -39,8 +39,7 @@ def parse_arguments():
     parser.add_argument('-m', '--means', type=int, nargs="+",
                         help="Mean value(s) of the distribution(s)")
     parser.add_argument('-s', '--stds', type=int, nargs="+",
-                        help="Standard deviation(s) of the "
-                             "distribution(s)")
+                        help="Standard deviation(s) of the distribution(s)")
     parser.add_argument('-n', '--num_of_samples', type=int, nargs="+",
                         help="Number of samples of the distribution(s)")
     parser.add_argument('--names', nargs="+",
