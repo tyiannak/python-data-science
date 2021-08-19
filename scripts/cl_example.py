@@ -11,11 +11,11 @@ def generate_distributions(means, stds, n_samples):
             for (mean, std, ns) in zip(means, stds, n_samples)]
 
 
-def visualize_distributions(data, dist_names, norm=False):
+def visualize_distributions(data, dist_names, norm=False, n_bins=10):
     fig = plotly.subplots.make_subplots(rows=1, cols=2)
     for i, x in enumerate(data): # for each distribution
         # (1) compute (and normalize) histogram
-        h, bins = np.histogram(x)
+        h, bins = np.histogram(x, bins=n_bins)
         if norm:
             h = h / h.sum()
         # get histogram bin centers from the endpoinds:
@@ -46,6 +46,8 @@ def parse_arguments():
                         help="Number of samples of the distribution(s)")
     parser.add_argument('--names', nargs="+",
                         help="Distribution names")
+    parser.add_argument("-b", "--bins", nargs=None, default=10, type=int,
+                        help="Number of histogram bins")
     parser.add_argument('--normalize', action='store_true',
                         help="Set true if histograms are to be normalized")
     arguments = parser.parse_args()
@@ -54,7 +56,8 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    m, s, n, norm = args.means, args.stds, args.num_of_samples, args.normalize
+    m, s, n, normalize, b = args.means, args.stds, args.num_of_samples, \
+                            args.normalize, args.bins
     if not(len(m) == len(s) == len(n)):
         print("Distribution parameters must be of the same length!")
         exit(1)
@@ -66,4 +69,4 @@ if __name__ == "__main__":
         names = [f"var_{i}" for i in range(len(m))]
 
     d = generate_distributions(m, s, n)
-    visualize_distributions(d, names, norm)
+    visualize_distributions(d, names, norm=normalize, n_bins=b)
