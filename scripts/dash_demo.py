@@ -26,24 +26,32 @@ nei_list = [{'label': c, 'value': c} for c in nei if c != "nan"]
 for n in nei:
     print(n, len(csv_data[csv_data["neighbourhood"]==n]))
 
-data = {'x': np.array(csv_data['longitude']),
-        'y': np.array(csv_data['latitude'])}
+data = {'lon': np.array(csv_data['longitude']),
+        'lat': np.array(csv_data['latitude'])}
 
 def draw_data():
     print(data)
     figure = {'data': [
-                        go.Scatter(x=data['x'],  y=data['y'],
-                                   mode='markers', name='y = -1',
-                                   marker_size=10,
+                        go.Scattermapbox(lat=data['lat'],  lon=data['lon'],
+                                   mode='markers',
+                                   marker_size=14,
                                    marker_color='rgba(22, 182, 255, .9)'
                                    ),
                    ],
         'layout': go.Layout(
-            xaxis=dict(range=[min(data['x']),
-                              max(data['x'])
-                    ]),
-            yaxis=dict(range=[min(data['y']),
-                              max(data['y'])]))}
+            hovermode='closest',
+            mapbox=dict(
+                accesstoken=open("mapbox_token").read(),
+                style='light',
+                bearing=0,
+                center=go.layout.mapbox.Center(
+                    lat=45,
+                    lon=-73
+                ),
+                pitch=0,
+                zoom=5
+            )
+           )}
 
     return dcc.Graph(figure=figure)
 
