@@ -32,20 +32,18 @@ data = {'x': np.array(csv_data['longitude']),
 def draw_data():
     print(data)
     figure = {'data': [
-                        go.Scatter(x=data['x'],
-                                   y=data['y'],
+                        go.Scatter(x=data['x'],  y=data['y'],
                                    mode='markers', name='y = -1',
                                    marker_size=10,
                                    marker_color='rgba(22, 182, 255, .9)'
                                    ),
                    ],
         'layout': go.Layout(
-            xaxis=dict(range=[min(data['x']) - np.mean(np.abs(data['x'])),
-                              max(data['x']) + np.mean(np.abs(data['x']))
+            xaxis=dict(range=[min(data['x']),
+                              max(data['x'])
                     ]),
-            yaxis=dict(range=[min(data['x']) - np.mean(np.abs(data['x'])),
-                              max(data['x']) + np.mean(np.abs(data['x']))
-                                              ]))}
+            yaxis=dict(range=[min(data['y']),
+                              max(data['y'])]))}
 
     return dcc.Graph(figure=figure)
 
