@@ -39,8 +39,10 @@ def draw_data():
                   hovermode='closest',
                   mapbox=dict(accesstoken=open("mapbox_token").read(),
                               style='light', bearing=0,
-                              center=go.layout.mapbox.Center( lat=45, lon=-73),
-                              pitch=0, zoom=5))}
+                              center=go.layout.mapbox.Center(
+                                  lat=np.mean(data['lat']),
+                                  lon=np.mean(data['lon'])),
+                              pitch=0, zoom=9))}
     return dcc.Graph(figure=figure)
 
 
