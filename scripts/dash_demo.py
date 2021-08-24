@@ -27,12 +27,15 @@ nei_list = [{'label': c, 'value': c} for c in nei if c != "nan"]
 #for n in nei:
 #    print(n, len(csv_data[csv_data["neighbourhood"]==n]))
 data = {'lon': np.array(csv_data['longitude']),
-        'lat': np.array(csv_data['latitude'])}
+        'lat': np.array(csv_data['latitude']),
+        'price': np.array([float(i[1:].replace(',', '')) for i in csv_data['price']])}
 
+
+data['price'][data['price']>500] = 0
 
 def draw_data():
     figure = {'data': [go.Scattermapbox(lat=data['lat'],  lon=data['lon'],
-                                        mode='markers',  marker_size=10,
+                                        mode='markers',  marker_size=4,
                                         marker_color='rgba(22, 182, 255, .9)'),
                        ],
               'layout': go.Layout(
@@ -43,7 +46,21 @@ def draw_data():
                                   lat=np.mean(data['lat']),
                                   lon=np.mean(data['lon'])),
                               pitch=0, zoom=12))}
-    return dcc.Graph(figure=figure, style={'width': '80vh', 'height': '80vh'})
+
+
+    h, h_bins = np.histogram(data['price'], bins=30)
+    h_bins = (h_bins[0:-1] + h_bins[1:]) / 2
+    print(h)
+    print(h_bins)
+    figure_2 = {'data': [go.Scatter(x=h_bins, y=h,
+                                  marker_color='rgba(22, 182, 255, .9)'),
+                       ],
+              'layout': go.Layout(
+                  hovermode='closest',)}
+
+
+    return dcc.Graph(figure=figure),\
+           dcc.Graph(figure=figure_2)
 
 
 def get_layout():
@@ -110,7 +127,8 @@ if __name__ == '__main__':
     def update_output(value):
         return 'You have selected "{}"'.format(value)
 
-    @app.callback(dash.dependencies.Output('main_graph', 'children'),
+    @app.callback([dash.dependencies.Output('main_graph', 'children'),
+                   dash.dependencies.Output('main_graph_2', 'children')],
                   dash.dependencies.Input('btn-next', 'n_clicks'))
     def displayClick(btn1):
         changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
