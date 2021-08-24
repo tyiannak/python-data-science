@@ -42,8 +42,8 @@ def draw_data():
                               center=go.layout.mapbox.Center(
                                   lat=np.mean(data['lat']),
                                   lon=np.mean(data['lon'])),
-                              pitch=0, zoom=9))}
-    return dcc.Graph(figure=figure)
+                              pitch=0, zoom=12))}
+    return dcc.Graph(figure=figure, style={'width': '80vh', 'height': '80vh'})
 
 
 def get_layout():
@@ -56,30 +56,45 @@ def get_layout():
         # Title
         dbc.Row(dbc.Col(html.H2("Airbnb Data Visualization Example",
                                 style={'textAlign': 'center',
+                                       "background-color": "red",
                                        'color': colors['text']}))),
 
         # Main Graph
         dbc.Row(
             [
                 dbc.Col(
-                    dcc.Graph(figure={'data': [go.Scatter(x=[1], y=[1],
-                                                          name='F')]}),
+                    dcc.Graph(figure={'data': [go.Scatter(x=[1], y=[1])]}),
+                    width=8,
+                    style={'textAlign': 'center',
+                           "background-color": "red",
+                           'color': colors['text']},
                     id="main_graph"),
+                dbc.Col(
+                    dcc.Graph(figure={'data': [go.Scatter(x=[1], y=[1])]}),
+                    width=4,
+                    style={'textAlign': 'center',
+                           "background-color": "red",
+                           'color': colors['text']},
+                    id="main_graph_2"),
+
             ], className="h-75"),
 
         # Controls
         dbc.Row(
             [
+                dbc.Col(
                 html.Div([
                     dcc.Dropdown(id='demo-dropdown', options=nei_list,
                                  value=nei[0]),
                     html.Div(id='dd-output-container')
                 ]),
-                dbc.Col(html.Button('Run', id='btn-next',
-                                    n_clicks=0)),
-                html.Div(id='container-button-timestamp')
+                    style={'textAlign': 'center',
+                           "background-color": "green",
+                           'color': colors['text']},
+                ),
+                dbc.Col(html.Button('Run', id='btn-next', n_clicks=0)),
             ], className="h-25"),
-    ], style={"height": "100vh"})
+    ])
 
     return layout
 
