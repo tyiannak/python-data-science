@@ -1,6 +1,8 @@
 """
-
 Instructions:
+- Simply run python3 dash_demo.py
+- You need to generate a maxbox token and save it in a file called .mapbox_token
+(https://docs.mapbox.com/help/getting-started/access-tokens/)
 
 Maintainer: Theodoros Giannakopoulos {tyiannak@gmail.com}
 """
