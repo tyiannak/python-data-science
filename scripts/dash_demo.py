@@ -18,6 +18,9 @@ import numpy as np
 
 colors = {'background': '#111111', 'text': '#7FDBDD'}
 def_font = dict(family="Courier New, Monospace", size=10, color='#000000')
+temp_style = {'textAlign': 'center',
+                           "background-color": "green",
+                           'color': colors['text']}
 
 
 # read airbnb data for Athens:
@@ -26,15 +29,40 @@ nei = csv_data["neighbourhood"].dropna().unique()
 nei_list = [{'label': c, 'value': c} for c in nei if c != "nan"]
 #for n in nei:
 #    print(n, len(csv_data[csv_data["neighbourhood"]==n]))
+
+global min_value
+global max_value
+
+min_value = 0
+max_value = 500
+
+
 data = {'lon': np.array(csv_data['longitude']),
         'lat': np.array(csv_data['latitude']),
-        'price': np.array([float(i[1:].replace(',', '')) for i in csv_data['price']])}
+        'price': np.array([float(i[1:].replace(',', ''))
+                           for i in csv_data['price']])}
 
 
 data['price'][data['price']>500] = 0
 
+
 def draw_data():
-    figure = {'data': [go.Scattermapbox(lat=data['lat'],  lon=data['lon'],
+    # filtering:
+    global min_value
+    global max_value
+
+    print(min_value, max_value)
+
+    data_new = {'lon': [], 'lat': [], 'price': []}
+    for i in range(len(data['lon'])):
+        if data['price'][i] >= min_value and data['price'][i] <= max_value:
+            data_new['lon'].append(data['lon'][i])
+            data_new['lat'].append(data['lat'][i])
+            data_new['price'].append(data['price'][i])
+    print(len(data_new['lon']))
+
+    figure = {'data': [go.Scattermapbox(lat=data_new['lat'],
+                                        lon=data_new['lon'],
                                         mode='markers',  marker_size=4,
                                         marker_color='rgba(22, 182, 255, .9)'),
                        ],
@@ -43,21 +71,16 @@ def draw_data():
                   mapbox=dict(accesstoken=open("mapbox_token").read(),
                               style='light', bearing=0,
                               center=go.layout.mapbox.Center(
-                                  lat=np.mean(data['lat']),
-                                  lon=np.mean(data['lon'])),
+                                  lat=np.mean(data_new['lat']),
+                                  lon=np.mean(data_new['lon'])),
                               pitch=0, zoom=12))}
 
 
-    h, h_bins = np.histogram(data['price'], bins=30)
+    h, h_bins = np.histogram(data_new['price'], bins=30)
     h_bins = (h_bins[0:-1] + h_bins[1:]) / 2
-    print(h)
-    print(h_bins)
     figure_2 = {'data': [go.Scatter(x=h_bins, y=h,
-                                  marker_color='rgba(22, 182, 255, .9)'),
-                       ],
-              'layout': go.Layout(
-                  hovermode='closest',)}
-
+                                    marker_color='rgba(22, 182, 255, .9)'),],
+              'layout': go.Layout(hovermode='closest',)}
 
     return dcc.Graph(figure=figure),\
            dcc.Graph(figure=figure_2)
@@ -100,16 +123,15 @@ def get_layout():
         dbc.Row(
             [
                 dbc.Col(
-                html.Div([
-                    dcc.Dropdown(id='demo-dropdown', options=nei_list,
-                                 value=nei[0]),
-                    html.Div(id='dd-output-container')
-                ]),
-                    style={'textAlign': 'center',
-                           "background-color": "green",
-                           'color': colors['text']},
+                    html.Div([
+                        dcc.Slider(id='slider_min',
+                                   min=0, max=500, step=1, value=0),
+                        dcc.Slider(id='slider_max',
+                                   min=0, max=500, step=1, value=500),
+                        html.Div(id='slider-min-container')]),
+                    style=temp_style,
                 ),
-                dbc.Col(html.Button('Run', id='btn-next', n_clicks=0)),
+                dbc.Col(html.Button('Run', id='btn-next')),
             ], className="h-25"),
     ])
 
@@ -121,20 +143,26 @@ if __name__ == '__main__':
 
     app.layout = get_layout()
 
+
     @app.callback(
-        dash.dependencies.Output('dd-output-container', 'children'),
-        [dash.dependencies.Input('demo-dropdown', 'value')])
-    def update_output(value):
-        return 'You have selected "{}"'.format(value)
-
-    @app.callback([dash.dependencies.Output('main_graph', 'children'),
-                   dash.dependencies.Output('main_graph_2', 'children')],
-                  dash.dependencies.Input('btn-next', 'n_clicks'))
-    def displayClick(btn1):
+        [dash.dependencies.Output('slider-min-container', 'children'),
+         dash.dependencies.Output('main_graph', 'children'),
+         dash.dependencies.Output('main_graph_2', 'children')],
+        [dash.dependencies.Input('slider_min', 'value'),
+         dash.dependencies.Input('slider_max', 'value'),
+         dash.dependencies.Input('btn-next', 'n_clicks')])
+    def update_output(val1, val2, val3):
         changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
-        if 'btn-next' in changed_id:
-            print("AAA")
+        if 'slider_min' in changed_id:
+            global min_value
+            min_value = int(val1)
+        elif 'slider_max' in changed_id:
+            global max_value
+            max_value = int(val2)
+        elif 'btn-next' in changed_id:
+            print("TODO")
+        g1, g2 = draw_data()
+        return f'Price Range {min_value} - {max_value} Euros', g1, g2
 
-        return draw_data()
 
     app.run_server(debug=True)
