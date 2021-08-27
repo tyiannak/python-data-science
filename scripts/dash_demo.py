@@ -32,11 +32,15 @@ nei_list = [{'label': c, 'value': c} for c in nei if c != "nan"]
 #for n in nei:
 #    print(n, len(csv_data[csv_data["neighbourhood"]==n]))
 
-global min_value
-global max_value
+global min_price
+global max_price
+global min_rating
+global max_rating
 
-min_value = 0
-max_value = 500
+min_price = 0
+max_price = 500
+min_rating = 0
+max_rating = 5
 
 
 data = {'lon': np.array(csv_data['longitude']),
@@ -50,18 +54,17 @@ data['price'][data['price']>500] = 0
 
 def draw_data():
     # filtering:
-    global min_value
-    global max_value
-
-    print(min_value, max_value)
+    global min_price
+    global max_price
 
     data_new = {'lon': [], 'lat': [], 'price': []}
     for i in range(len(data['lon'])):
-        if data['price'][i] >= min_value and data['price'][i] <= max_value:
+        if data['price'][i] >= min_price and data['price'][i] <= max_price:
             data_new['lon'].append(data['lon'][i])
             data_new['lat'].append(data['lat'][i])
             data_new['price'].append(data['price'][i])
-    print(len(data_new['lon']))
+
+    print(min_price, max_price, len(data_new['lon']))
 
     figure = {'data': [go.Scattermapbox(lat=data_new['lat'],
                                         lon=data_new['lon'],
@@ -77,15 +80,13 @@ def draw_data():
                                   lon=np.mean(data_new['lon'])),
                               pitch=0, zoom=12))}
 
-
     h, h_bins = np.histogram(data_new['price'], bins=30)
     h_bins = (h_bins[0:-1] + h_bins[1:]) / 2
     figure_2 = {'data': [go.Scatter(x=h_bins, y=h,
                                     marker_color='rgba(22, 182, 255, .9)'),],
-              'layout': go.Layout(hovermode='closest',)}
+                'layout': go.Layout(hovermode='closest',)}
 
-    return dcc.Graph(figure=figure),\
-           dcc.Graph(figure=figure_2)
+    return dcc.Graph(figure=figure), dcc.Graph(figure=figure_2)
 
 
 def get_layout():
@@ -118,7 +119,6 @@ def get_layout():
                            "background-color": "red",
                            'color': colors['text']},
                     id="main_graph_2"),
-
             ], className="h-75"),
 
         # Controls
@@ -126,14 +126,27 @@ def get_layout():
             [
                 dbc.Col(
                     html.Div([
-                        dcc.Slider(id='slider_min',
+                        dcc.Slider(id='slider_price_min',
                                    min=0, max=500, step=1, value=0),
-                        dcc.Slider(id='slider_max',
+                        dcc.Slider(id='slider_price_max',
                                    min=0, max=500, step=1, value=500),
-                        html.Div(id='slider-min-container')]),
+                        html.Div(id='slider_price_container')]),
                     style=temp_style,
+                    width=2,
                 ),
-                dbc.Col(html.Button('Run', id='btn-next')),
+
+                dbc.Col(
+                    html.Div([
+                        dcc.Slider(id='slider_rating_min',
+                                   min=0, max=5, step=1, value=0),
+                        dcc.Slider(id='slider_rating_max',
+                                   min=0, max=5, step=1, value=5),
+                        html.Div(id='slider_rating_container')]),
+                    style=temp_style,
+                    width=2,
+                ),
+
+                    dbc.Col(html.Button('Run', id='btn-next'), width=2),
             ], className="h-25"),
     ])
 
@@ -145,26 +158,36 @@ if __name__ == '__main__':
 
     app.layout = get_layout()
 
-
     @app.callback(
-        [dash.dependencies.Output('slider-min-container', 'children'),
+        [dash.dependencies.Output('slider_price_container', 'children'),
+         dash.dependencies.Output('slider_rating_container', 'children'),
          dash.dependencies.Output('main_graph', 'children'),
          dash.dependencies.Output('main_graph_2', 'children')],
-        [dash.dependencies.Input('slider_min', 'value'),
-         dash.dependencies.Input('slider_max', 'value'),
+        [dash.dependencies.Input('slider_price_min', 'value'),
+         dash.dependencies.Input('slider_price_max', 'value'),
+         dash.dependencies.Input('slider_rating_min', 'value'),
+         dash.dependencies.Input('slider_rating_max', 'value'),
          dash.dependencies.Input('btn-next', 'n_clicks')])
-    def update_output(val1, val2, val3):
+    def update_output(val1, val2, val3, val4, val5):
         changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
-        if 'slider_min' in changed_id:
-            global min_value
-            min_value = int(val1)
-        elif 'slider_max' in changed_id:
-            global max_value
-            max_value = int(val2)
+        if 'slider_price_min' in changed_id:
+            global min_price
+            min_price = int(val1)
+        elif 'slider_price_max' in changed_id:
+            global max_price
+            max_price = int(val2)
+        if 'slider_rating_min' in changed_id:
+            global min_rating
+            min_rating = int(val3)
+        elif 'slider_rating_max' in changed_id:
+            global max_rating
+            max_rating = int(val4)
         elif 'btn-next' in changed_id:
             print("TODO")
         g1, g2 = draw_data()
-        return f'Price Range {min_value} - {max_value} Euros', g1, g2
+        return f'Price {min_price} - {max_price} Euros', \
+               f'Rating {min_rating} - {max_rating} Stars', \
+               g1, g2
 
 
     app.run_server(debug=True)
