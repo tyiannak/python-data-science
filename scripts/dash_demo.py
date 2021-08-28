@@ -53,7 +53,7 @@ print(len(csv_data))
 
 data = {'lon': np.array(csv_data['longitude']),
         'lat': np.array(csv_data['latitude']),
-        'neighbourhood': csv_data['neighbourhood_cleansed'],
+        'neighbourhood': list(csv_data['neighbourhood_cleansed']),
         'price': np.array(csv_data['price']),
         'rating': np.array(csv_data['review_scores_rating'])}
 
@@ -70,7 +70,7 @@ def draw_data():
     global max_rating
 
 
-    data_new = {'lon': [], 'lat': [], 'price': []}
+    data_new = {'lon': [], 'lat': [], 'price': [], 'description': []}
     for i in range(len(data['lon'])):
         if (data['price'][i] >= min_price) and \
                 (data['price'][i] <= max_price) and \
@@ -79,13 +79,15 @@ def draw_data():
             data_new['lon'].append(data['lon'][i])
             data_new['lat'].append(data['lat'][i])
             data_new['price'].append(data['price'][i])
-
+            data_new['description'].append(data['neighbourhood'][i])
+    print(data['neighbourhood'])
     print(f'value:{min_price}-{max_price}, '
           f'rating:{min_rating}-{max_rating}, '
           f'data_samples={len(data_new["lon"])}')
 
     figure = {'data': [go.Scattermapbox(lat=data_new['lat'],
                                         lon=data_new['lon'],
+                                        text=data_new['description'],
                                         mode='markers',  marker_size=4,
                                         marker_color='rgba(22, 182, 255, .9)'),
                        ],
