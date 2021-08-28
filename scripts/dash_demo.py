@@ -38,33 +38,51 @@ global min_rating
 global max_rating
 
 min_price = 0
-max_price = 500
-min_rating = 0
+max_price = 1000
+min_rating = 3
 max_rating = 5
 
+print(len(csv_data))
+csv_data = csv_data[csv_data.review_scores_rating.notnull()]
+print(len(csv_data))
+csv_data.price = csv_data.price.str.replace('\$', '', regex=True)
+csv_data.price = csv_data.price.str.replace(',', '', regex=True)
+csv_data.price = csv_data.price.astype("float")
+csv_data = csv_data[csv_data["price"] <= 1000]
+print(len(csv_data))
 
 data = {'lon': np.array(csv_data['longitude']),
         'lat': np.array(csv_data['latitude']),
-        'price': np.array([float(i[1:].replace(',', ''))
-                           for i in csv_data['price']])}
+        'neighbourhood': csv_data['neighbourhood_cleansed'],
+        'price': np.array(csv_data['price']),
+        'rating': np.array(csv_data['review_scores_rating'])}
 
 
-data['price'][data['price']>500] = 0
+
+#data['price'][data['price']>500] = 0
 
 
 def draw_data():
     # filtering:
     global min_price
     global max_price
+    global min_rating
+    global max_rating
+
 
     data_new = {'lon': [], 'lat': [], 'price': []}
     for i in range(len(data['lon'])):
-        if data['price'][i] >= min_price and data['price'][i] <= max_price:
+        if (data['price'][i] >= min_price) and \
+                (data['price'][i] <= max_price) and \
+                (data['rating'][i] >= min_rating) and \
+                (data['rating'][i] <= max_rating):
             data_new['lon'].append(data['lon'][i])
             data_new['lat'].append(data['lat'][i])
             data_new['price'].append(data['price'][i])
 
-    print(min_price, max_price, len(data_new['lon']))
+    print(f'value:{min_price}-{max_price}, '
+          f'rating:{min_rating}-{max_rating}, '
+          f'data_samples={len(data_new["lon"])}')
 
     figure = {'data': [go.Scattermapbox(lat=data_new['lat'],
                                         lon=data_new['lon'],
@@ -138,9 +156,9 @@ def get_layout():
                 dbc.Col(
                     html.Div([
                         dcc.Slider(id='slider_rating_min',
-                                   min=0, max=5, step=1, value=0),
+                                   min=3, max=5, step=0.1, value=3),
                         dcc.Slider(id='slider_rating_max',
-                                   min=0, max=5, step=1, value=5),
+                                   min=3, max=5, step=0.1, value=5),
                         html.Div(id='slider_rating_container')]),
                     style=temp_style,
                     width=2,
@@ -176,12 +194,12 @@ if __name__ == '__main__':
         elif 'slider_price_max' in changed_id:
             global max_price
             max_price = int(val2)
-        if 'slider_rating_min' in changed_id:
+        elif 'slider_rating_min' in changed_id:
             global min_rating
-            min_rating = int(val3)
+            min_rating = float(val3)
         elif 'slider_rating_max' in changed_id:
             global max_rating
-            max_rating = int(val4)
+            max_rating = float(val4)
         elif 'btn-next' in changed_id:
             print("TODO")
         g1, g2 = draw_data()
