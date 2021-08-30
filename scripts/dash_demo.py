@@ -14,15 +14,14 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
-global data
+import dash_table
 import numpy as np
 
 
 colors = {'background': '#111111', 'text': '#7FDBDD'}
 def_font = dict(family="Courier New, Monospace", size=10, color='#000000')
-temp_style = {'textAlign': 'center',
-                           "background-color": "green",
-                           'color': colors['text']}
+temp_style = {'textAlign': 'center', "background-color": "green",
+              'color': colors['text']}
 
 
 # read airbnb data for Athens:
@@ -36,6 +35,7 @@ global min_price
 global max_price
 global min_rating
 global max_rating
+global csv_data_temp
 
 min_price = 0
 max_price = 1000
@@ -45,21 +45,19 @@ max_rating = 5
 print(len(csv_data))
 csv_data = csv_data[csv_data.review_scores_rating.notnull()]
 print(len(csv_data))
-csv_data.price = csv_data.price.str.replace('\$', '', regex=True)
+csv_data.price = csv_data.price.str.replace('$', '', regex=True)
 csv_data.price = csv_data.price.str.replace(',', '', regex=True)
 csv_data.price = csv_data.price.astype("float")
 csv_data = csv_data[csv_data["price"] <= 1000]
 print(len(csv_data))
 
-data = {'lon': np.array(csv_data['longitude']),
-        'lat': np.array(csv_data['latitude']),
-        'neighbourhood': list(csv_data['neighbourhood_cleansed']),
-        'price': np.array(csv_data['price']),
-        'rating': np.array(csv_data['review_scores_rating'])}
 
-
-
-#data['price'][data['price']>500] = 0
+def get_statistics(d):
+    prices = pd.DataFrame(
+        d.groupby('neighbourhood_cleansed')['price',
+                                            'review_scores_rating'].median())
+    prices = prices.reset_index()
+    return prices
 
 
 def draw_data():
@@ -68,26 +66,20 @@ def draw_data():
     global max_price
     global min_rating
     global max_rating
+    global csv_data_temp
+    csv_data_temp = csv_data[(csv_data['price'] <= max_price) &
+                             (csv_data['price'] >= min_price) &
+                             (csv_data['review_scores_rating'] <= max_rating) &
+                             (csv_data['review_scores_rating'] >= min_rating)
+                             ]
 
-
-    data_new = {'lon': [], 'lat': [], 'price': [], 'description': []}
-    for i in range(len(data['lon'])):
-        if (data['price'][i] >= min_price) and \
-                (data['price'][i] <= max_price) and \
-                (data['rating'][i] >= min_rating) and \
-                (data['rating'][i] <= max_rating):
-            data_new['lon'].append(data['lon'][i])
-            data_new['lat'].append(data['lat'][i])
-            data_new['price'].append(data['price'][i])
-            data_new['description'].append(data['neighbourhood'][i])
-    print(data['neighbourhood'])
     print(f'value:{min_price}-{max_price}, '
           f'rating:{min_rating}-{max_rating}, '
-          f'data_samples={len(data_new["lon"])}')
+          f'data_samples={len(csv_data_temp)}')
 
-    figure = {'data': [go.Scattermapbox(lat=data_new['lat'],
-                                        lon=data_new['lon'],
-                                        text=data_new['description'],
+    figure = {'data': [go.Scattermapbox(lat=csv_data_temp['latitude'],
+                                        lon=csv_data_temp['longitude'],
+                                        text=csv_data_temp['neighbourhood_cleansed'],
                                         mode='markers',  marker_size=4,
                                         marker_color='rgba(22, 182, 255, .9)'),
                        ],
@@ -96,17 +88,25 @@ def draw_data():
                   mapbox=dict(accesstoken=open("mapbox_token").read(),
                               style='light', bearing=0,
                               center=go.layout.mapbox.Center(
-                                  lat=np.mean(data_new['lat']),
-                                  lon=np.mean(data_new['lon'])),
+                                  lat=np.mean(csv_data_temp['latitude']),
+                                  lon=np.mean(csv_data_temp['longitude'])),
                               pitch=0, zoom=12))}
 
-    h, h_bins = np.histogram(data_new['price'], bins=30)
+    h, h_bins = np.histogram(csv_data_temp['price'], bins=30)
     h_bins = (h_bins[0:-1] + h_bins[1:]) / 2
     figure_2 = {'data': [go.Scatter(x=h_bins, y=h,
                                     marker_color='rgba(22, 182, 255, .9)'),],
                 'layout': go.Layout(hovermode='closest',)}
 
-    return dcc.Graph(figure=figure), dcc.Graph(figure=figure_2)
+    price_table = get_statistics(csv_data)
+
+    table = dash_table.DataTable(
+        id='table',
+        columns=[{"name": i, "id": i} for i in price_table.columns],
+        data=price_table.to_dict('records'),
+    )
+
+    return dcc.Graph(figure=figure), dcc.Graph(figure=figure_2), table
 
 
 def get_layout():
@@ -166,7 +166,10 @@ def get_layout():
                     width=2,
                 ),
 
-                    dbc.Col(html.Button('Run', id='btn-next'), width=2),
+                dbc.Col(html.Button('Run', id='btn-next'), width=2),
+
+                html.Div(id='dataframe_output'),
+
             ], className="h-25"),
     ])
 
@@ -182,7 +185,8 @@ if __name__ == '__main__':
         [dash.dependencies.Output('slider_price_container', 'children'),
          dash.dependencies.Output('slider_rating_container', 'children'),
          dash.dependencies.Output('main_graph', 'children'),
-         dash.dependencies.Output('main_graph_2', 'children')],
+         dash.dependencies.Output('main_graph_2', 'children'),
+         dash.dependencies.Output('dataframe_output', 'children')],
         [dash.dependencies.Input('slider_price_min', 'value'),
          dash.dependencies.Input('slider_price_max', 'value'),
          dash.dependencies.Input('slider_rating_min', 'value'),
@@ -204,10 +208,10 @@ if __name__ == '__main__':
             max_rating = float(val4)
         elif 'btn-next' in changed_id:
             print("TODO")
-        g1, g2 = draw_data()
+        g1, g2, t = draw_data()
         return f'Price {min_price} - {max_price} Euros', \
                f'Rating {min_rating} - {max_rating} Stars', \
-               g1, g2
+               g1, g2, t
 
 
     app.run_server(debug=True)
