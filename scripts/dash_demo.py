@@ -53,11 +53,12 @@ print(len(csv_data))
 
 
 def get_statistics(d):
-    prices = pd.DataFrame(
-        d.groupby('neighbourhood_cleansed')['price',
-                                            'review_scores_rating'].median())
-    prices = prices.reset_index()
-    return prices
+    data_t = pd.DataFrame(d.groupby('neighbourhood_cleansed').
+                          agg({'price': 'median',
+                               'review_scores_rating': 'median',
+                               'id': 'count'})).reset_index().to_dict('records')
+    print(data_t)
+    return data_t
 
 
 def draw_data():
@@ -98,15 +99,9 @@ def draw_data():
                                     marker_color='rgba(22, 182, 255, .9)'),],
                 'layout': go.Layout(hovermode='closest',)}
 
-    price_table = get_statistics(csv_data)
+    price_table = get_statistics(csv_data_temp)
 
-    table = dash_table.DataTable(
-        id='table',
-        columns=[{"name": i, "id": i} for i in price_table.columns],
-        data=price_table.to_dict('records'),
-    )
-
-    return dcc.Graph(figure=figure), dcc.Graph(figure=figure_2), table
+    return dcc.Graph(figure=figure), dcc.Graph(figure=figure_2), price_table
 
 
 def get_layout():
@@ -141,6 +136,7 @@ def get_layout():
                     id="main_graph_2"),
             ], className="h-75"),
 
+
         # Controls
         dbc.Row(
             [
@@ -168,7 +164,21 @@ def get_layout():
 
                 dbc.Col(html.Button('Run', id='btn-next'), width=2),
 
-                html.Div(id='dataframe_output'),
+                dbc.Col(
+                    dash_table.DataTable(
+                        id='dataframe_output',
+                        sort_mode='single',
+                        columns=[{"name": "avg " + i, "id": i, } for i in
+                                 ["neighbourhood_cleansed",
+                                  "price",
+                                  "review_scores_rating"]], ),
+                    width=2
+                )
+
+                #dbc.Col(dash_table.DataTable(id='dataframe_output'),
+                #        width=4)
+
+                #html.Div(id='dataframe_output'),
 
             ], className="h-25"),
     ])
@@ -186,7 +196,7 @@ if __name__ == '__main__':
          dash.dependencies.Output('slider_rating_container', 'children'),
          dash.dependencies.Output('main_graph', 'children'),
          dash.dependencies.Output('main_graph_2', 'children'),
-         dash.dependencies.Output('dataframe_output', 'children')],
+         dash.dependencies.Output('dataframe_output', 'data')],
         [dash.dependencies.Input('slider_price_min', 'value'),
          dash.dependencies.Input('slider_price_max', 'value'),
          dash.dependencies.Input('slider_rating_min', 'value'),
