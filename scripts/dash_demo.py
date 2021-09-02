@@ -35,11 +35,8 @@ global max_price
 global min_rating
 global max_rating
 global csv_data_temp
-
-min_price = 0
-max_price = 1000
-min_rating = 3
-max_rating = 5
+min_price, max_price = 0, 1000
+min_rating, max_rating = 3, 5
 
 print(len(csv_data))
 csv_data = csv_data[csv_data.review_scores_rating.notnull()]
@@ -52,10 +49,14 @@ print(len(csv_data))
 
 
 def get_statistics(d):
-    data_t = pd.DataFrame(d.groupby('neighbourhood_cleansed').
-                          agg({'price': 'median',
-                               'review_scores_rating': 'median',
-                               'id': 'count'})).reset_index().to_dict('records')
+    df = pd.DataFrame(d.groupby('neighbourhood_cleansed').agg(
+        {
+            'id': 'count',
+            'price': 'median',
+            'review_scores_rating': 'median',
+         }
+    )).round(2)
+    data_t = df.reset_index().to_dict('records')
     return data_t
 
 
@@ -161,11 +162,12 @@ def get_layout():
     Initialize the UI layout
     """
     global data
-    cols = [{"name": "avg " + i, "id": i, } for i in
-     ["neighbourhood_cleansed",
-      "price",
-      "review_scores_rating"]]
+    cols = [{"name": "neighbourhood_cleansed", "id": "neighbourhood_cleansed"}]
     cols.append({"name": "count", "id": "id"})
+    cols += [{"name": "avg " + i, "id": i, }
+             for i in
+             ["price", "review_scores_rating"]]
+
 
     layout = dbc.Container([
         # Title
@@ -186,7 +188,8 @@ def get_layout():
                         id='dataframe_output',
                         fixed_rows={'headers': True},
                         style_cell={'fontSize': 8, 'font-family': 'sans-serif',
-                                    'minWidth': 20, 'width': 95,
+                                    'minWidth': 10,
+                                    'width': 40,
                                     'maxWidth': 95},
                         sort_action="native",
                         sort_mode="multi",
