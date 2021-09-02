@@ -20,9 +20,8 @@ import numpy as np
 
 colors = {'background': '#111111', 'text': '#7FDBDD'}
 def_font = dict(family="Courier New, Monospace", size=10, color='#000000')
-temp_style = {'textAlign': 'center', "background-color": "green",
-              'color': colors['text']}
-
+fonts_histogram = dict(family="Courier New, monospace", size=8,
+                      color="RebeccaPurple")
 
 # read airbnb data for Athens:
 csv_data = pd.read_csv("listings.csv")
@@ -57,7 +56,6 @@ def get_statistics(d):
                           agg({'price': 'median',
                                'review_scores_rating': 'median',
                                'id': 'count'})).reset_index().to_dict('records')
-    print(data_t)
     return data_t
 
 
@@ -81,27 +79,81 @@ def draw_data():
     figure = {'data': [go.Scattermapbox(lat=csv_data_temp['latitude'],
                                         lon=csv_data_temp['longitude'],
                                         text=csv_data_temp['neighbourhood_cleansed'],
-                                        mode='markers',  marker_size=4,
+                                        mode='markers',  marker_size=7,
                                         marker_color='rgba(22, 182, 255, .9)'),
                        ],
               'layout': go.Layout(
+                  height=500,
                   hovermode='closest',
+                  autosize=False,
+                  margin={"l": 0, "r": 0, "b": 0, "t": 0, "pad": 0},
                   mapbox=dict(accesstoken=open("mapbox_token").read(),
-                              style='light', bearing=0,
+                              style='outdoors', bearing=0,
                               center=go.layout.mapbox.Center(
                                   lat=np.mean(csv_data_temp['latitude']),
                                   lon=np.mean(csv_data_temp['longitude'])),
-                              pitch=0, zoom=12))}
+                              pitch=0, zoom=13))}
 
     h, h_bins = np.histogram(csv_data_temp['price'], bins=30)
     h_bins = (h_bins[0:-1] + h_bins[1:]) / 2
     figure_2 = {'data': [go.Scatter(x=h_bins, y=h,
                                     marker_color='rgba(22, 182, 255, .9)'),],
-                'layout': go.Layout(hovermode='closest',)}
+                'layout': go.Layout(
+                    title="Prices Distribution",
+                    xaxis_title="Price ($)",
+                    yaxis_title="Counts",
+                    font=fonts_histogram,
+                    hovermode='closest',
+                    autosize=False,
+                    height=200,
+                    margin={"l": 40, "r": 15, "b": 30, "t": 30, "pad": 0},
+                )}
+
+    nbeds = csv_data_temp['beds'].dropna()
+    h, h_bins = np.histogram(nbeds, bins=range(int(nbeds.min()),
+                                               int(nbeds.max())))
+    h_bins = np.array(list(range(int(nbeds.min()), int(nbeds.max()))))
+    figure_3 = {'data': [go.Scatter(x=h_bins, y=h,
+                                    marker_color='rgba(22, 182, 255, .9)'),],
+                'layout': go.Layout(
+                    title="#Beds Distribution",
+                    xaxis_title="#Beds",
+                    yaxis_title="Counts",
+                    font=fonts_histogram,
+                    hovermode='closest',
+                    autosize=False,
+                    height=200,
+                    margin={"l": 40, "r": 15, "b": 30, "t": 30, "pad": 0},
+                )}
+
+    nbedrooms = csv_data_temp['bedrooms'].dropna()
+    h, h_bins = np.histogram(nbedrooms, bins=range(1, 7))
+    h_bins = np.array(list(range(1, 7)))
+    figure_4 = {'data': [go.Scatter(x=h_bins, y=h,
+                                    marker_color='rgba(22, 182, 255, .9)'),],
+                'layout': go.Layout(
+                    title="#Bedrooms Distribution",
+                    xaxis_title="#Bedrooms",
+                    yaxis_title="Counts",
+                    font=fonts_histogram,
+                    hovermode='closest',
+                    autosize=False,
+                    height=200,
+                    margin={"l": 40, "r": 15, "b": 30, "t": 30, "pad": 0},
+                )}
+
 
     price_table = get_statistics(csv_data_temp)
 
-    return dcc.Graph(figure=figure), dcc.Graph(figure=figure_2), price_table
+    return dcc.Graph(figure=figure,
+                     config={'displayModeBar': False}), \
+           dcc.Graph(figure=figure_2,
+                     config={'displayModeBar': False}), \
+           dcc.Graph(figure=figure_3,
+                     config={'displayModeBar': False}), \
+           dcc.Graph(figure=figure_4,
+                     config={'displayModeBar': False}), \
+           price_table
 
 
 def get_layout():
@@ -109,31 +161,52 @@ def get_layout():
     Initialize the UI layout
     """
     global data
+    cols = [{"name": "avg " + i, "id": i, } for i in
+     ["neighbourhood_cleansed",
+      "price",
+      "review_scores_rating"]]
+    cols.append({"name": "count", "id": "id"})
 
     layout = dbc.Container([
         # Title
         dbc.Row(dbc.Col(html.H2("Airbnb Data Visualization Example",
                                 style={'textAlign': 'center',
-                                       "background-color": "red",
                                        'color': colors['text']}))),
 
         # Main Graph
         dbc.Row(
             [
                 dbc.Col(
-                    dcc.Graph(figure={'data': [go.Scatter(x=[1], y=[1])]}),
-                    width=8,
-                    style={'textAlign': 'center',
-                           "background-color": "red",
-                           'color': colors['text']},
-                    id="main_graph"),
+                    dcc.Graph(figure={'data': [go.Scatter(x=[1], y=[1])],},
+                              config=dict(displayModeBar=False)),
+                    width=9, id="map_graph"),
+
                 dbc.Col(
-                    dcc.Graph(figure={'data': [go.Scatter(x=[1], y=[1])]}),
-                    width=4,
-                    style={'textAlign': 'center',
-                           "background-color": "red",
-                           'color': colors['text']},
-                    id="main_graph_2"),
+                    dash_table.DataTable(
+                        id='dataframe_output',
+                        fixed_rows={'headers': True},
+                        style_cell={'fontSize': 8, 'font-family': 'sans-serif',
+                                    'minWidth': 20, 'width': 95,
+                                    'maxWidth': 95},
+                        sort_action="native",
+                        sort_mode="multi",
+                        column_selectable="single",
+                        selected_columns=[],
+                        selected_rows=[],
+                        style_table={'height': 700},
+                        virtualization=True,
+                        #page_size=20,
+                        columns=cols,
+                        style_header={
+                            'font-family': 'sans-serif',
+                            'fontWeight': 'bold',
+                            'font_size': '9px',
+                            'color': 'white',
+                            'backgroundColor': 'black'
+                        },
+                    ),
+                    width=3
+                ),
             ], className="h-75"),
 
 
@@ -146,8 +219,8 @@ def get_layout():
                                    min=0, max=500, step=1, value=0),
                         dcc.Slider(id='slider_price_max',
                                    min=0, max=500, step=1, value=500),
-                        html.Div(id='slider_price_container')]),
-                    style=temp_style,
+                        html.Div(id='slider_price_container'),]
+                    ),
                     width=2,
                 ),
 
@@ -158,27 +231,22 @@ def get_layout():
                         dcc.Slider(id='slider_rating_max',
                                    min=3, max=5, step=0.1, value=5),
                         html.Div(id='slider_rating_container')]),
-                    style=temp_style,
                     width=2,
                 ),
 
-                dbc.Col(html.Button('Run', id='btn-next'), width=2),
+                dbc.Col(
+                    dcc.Graph(figure={'data': [go.Scatter(x=[1], y=[1])]}),
+                    width=2, id="hist_graph_1"),
 
                 dbc.Col(
-                    dash_table.DataTable(
-                        id='dataframe_output',
-                        sort_mode='single',
-                        columns=[{"name": "avg " + i, "id": i, } for i in
-                                 ["neighbourhood_cleansed",
-                                  "price",
-                                  "review_scores_rating"]], ),
-                    width=2
-                )
+                    dcc.Graph(figure={'data': [go.Scatter(x=[1], y=[1])]}),
+                    width=2, id="hist_graph_2"),
 
-                #dbc.Col(dash_table.DataTable(id='dataframe_output'),
-                #        width=4)
+                dbc.Col(
+                    dcc.Graph(figure={'data': [go.Scatter(x=[1], y=[1])]}),
+                    width=2, id="hist_graph_3"),
 
-                #html.Div(id='dataframe_output'),
+                dbc.Col(html.Button('Run', id='btn-next'), width=2),
 
             ], className="h-25"),
     ])
@@ -194,8 +262,10 @@ if __name__ == '__main__':
     @app.callback(
         [dash.dependencies.Output('slider_price_container', 'children'),
          dash.dependencies.Output('slider_rating_container', 'children'),
-         dash.dependencies.Output('main_graph', 'children'),
-         dash.dependencies.Output('main_graph_2', 'children'),
+         dash.dependencies.Output('map_graph', 'children'),
+         dash.dependencies.Output('hist_graph_1', 'children'),
+         dash.dependencies.Output('hist_graph_2', 'children'),
+         dash.dependencies.Output('hist_graph_3', 'children'),
          dash.dependencies.Output('dataframe_output', 'data')],
         [dash.dependencies.Input('slider_price_min', 'value'),
          dash.dependencies.Input('slider_price_max', 'value'),
@@ -218,10 +288,10 @@ if __name__ == '__main__':
             max_rating = float(val4)
         elif 'btn-next' in changed_id:
             print("TODO")
-        g1, g2, t = draw_data()
-        return f'Price {min_price} - {max_price} Euros', \
+        g1, g2, g3, g4, t = draw_data()
+        return f'Price {min_price} - {max_price} $', \
                f'Rating {min_rating} - {max_rating} Stars', \
-               g1, g2, t
+               g1, g2, g3, g4, t
 
 
     app.run_server(debug=True)
