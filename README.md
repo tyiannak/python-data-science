@@ -18,6 +18,5 @@ python3 cl_example.py -m 0 5 10 15 20 -s 1 1 1 7 2 -n 5000 5000 5000 10000 5000 
 ```
 
 ## TODOs
- 1. Dash example
- 2. NLP example (no ML)
- 3. docker
+ 1. NLP example (no ML)
+ 2. docker
