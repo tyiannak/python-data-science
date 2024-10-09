@@ -1,6 +1,6 @@
 
-# Virtual environments
-## using the existing requirements:
+# 1. Virtual environments
+## 1.1 using the existing requirements:
 ```
 virtualenv -p python3.9 venv
 source venv/bin/activate
@@ -8,6 +8,7 @@ pip3 install numpy==1.20.3
 python3 deleteme.py
 ```
 
+## 1.2 Save your own requirements
 To save our own requirements we either do it manually by editing the requirements file or we do:
 ```
 pipreqs .
@@ -19,16 +20,16 @@ Notes:
  * we share the `requirements.txt` in the repo along with our code
  * για να βγω απο το virtual environment κάνω απλα deactivate 
 
-# git / github
+# 2 git / github
 
-## download the repo code (clone repo):
+## 2.1 download the repo code (clone repo):
 ```
 git clone https://github.com/tyiannak/python-data-science.git
 ```
 
-## then we do changes in the code locally (using our IDE and testing)
+## 2.2 then we do changes in the code locally (using our IDE and testing)
 
-## see the changes we have done locally:
+## 2.3 see the changes we have done locally:
 ```
 git status
 ```
@@ -41,18 +42,18 @@ or see changes in particular files:
 ```
 git diff <some_file>
 ```
-## steps to add a new file in the repo:
+## 2.4 steps to add a new file in the repo:
  * first we create and/or edit a file (say, `TODOs`) 
  * `git add TODOs` (can add more than one file)
  * `git commit -m "added a TODOs list and initated it with a first TODO message"`
  * `git push` (this sends the changes to the repo)
 
-## to get the changes locally:
+## 2.5 to get the changes locally:
  * `git pull`: get latest version of current branch (see bellow for branches!)
  * `git checkout <some_branch`: select branch (see bellow for branches!)
 
 
-## Github Project example
+## 2.6 Github Project example
 1. Create a new project
 2. Add a new task and convert it to "issue"
 3. Select issue to work on and drag it to "ongoing"
@@ -66,7 +67,7 @@ git diff <some_file>
 Summary of steps for a single task/issue:
 task / issue --> branch --> work on branch locally --> push changes to branch and P(ull) R(equest) when ready --> the person(s) that do the QA do the final merging of the branch to master
 
-## Example for a small excercise for 2-persons teams:
+## 2.7 Example for a small excercise for 2-persons teams:
  * person A creates a new github repo. Adds person B as "collaborator".
  * persons A and B create a "project",  add a QA column before DONE 
  * persons A and B create two dummy tasks and convert them to "issues" in the project view
